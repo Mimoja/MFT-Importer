@@ -1,12 +1,12 @@
 package main
 
 import (
-	"MimojaFirmwareToolkit/pkg/Common"
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
+	"github.com/Mimoja/MFT-Common"
 )
 
 var jsonEncoder *json.Encoder

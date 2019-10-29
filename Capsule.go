@@ -1,10 +1,10 @@
 package main
 
 import (
-	"MimojaFirmwareToolkit/pkg/Common"
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/Mimoja/MFT-Common"
 	"io/ioutil"
 	"path/filepath"
 )
