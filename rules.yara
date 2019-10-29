@@ -7,6 +7,16 @@ rule ifd {
         or $ifdHeader at 0x10
 }
 
+rule intel_bootguard {
+    strings:
+        $acbp = "__ACBP__" // BootPolicyManifest
+        $keym = "__KEYM__" // Key
+        $ibbs = "__IBBS__" // BootBlock
+        $pmsg = "__PMSG__" // BootPolicySignature
+
+    condition:
+        any of them
+}
 
 rule efiString {
     strings:
@@ -60,7 +70,7 @@ rule efiCapsule {
                 or $TOSH
 }
 
-rule ec{
+rule ec {
     strings:
         $ITERevision = {00 24 52 65 76 69 73 69  6f 6e 3a 20 20 20 31 2e}
         $ITEHead = { 02 00 3? 00 00 00 00 00  02 10 3? 00 00 00 00 00
@@ -102,9 +112,8 @@ rule amdIMCHeader {
 rule bios {
          strings:
              $BiosHeader = {55 aa 55 aa}
-             //$WHATEVER = {aa 55 aa 55}
          condition:
-             $BiosHeader at 0x00 //or $WHATEVER
+             $BiosHeader at 0x00
 }
 
 rule intelME {

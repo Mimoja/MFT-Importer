@@ -227,12 +227,12 @@ func detectMagic(entry *MFTCommon.StorageEntry, data []byte) map[string][]byte {
 					}
 					a.Close()
 				default:
-					Bundle.Log.WithField("file", entry).Errorf("Unhandlded RULE: %s : %s at 0x%X", match.Rule, m.Name[1:], m.Offset)
+					Bundle.Log.WithField("file", entry).Errorf("Unhandled RULE: %s : %s at 0x%X", match.Rule, m.Name[1:], m.Offset)
 				}
 			}
 		default:
 			for _, m := range match.Strings {
-				Bundle.Log.WithField("file", entry).Errorf("Unhandlded RULE: %s : %s at 0x%X", match.Rule, m.Name[1:], m.Offset)
+				Bundle.Log.WithField("file", entry).Errorf("Unhandled RULE: %s : %s at 0x%X", match.Rule, m.Name[1:], m.Offset)
 			}
 			continue
 		}
