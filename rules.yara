@@ -155,6 +155,13 @@ rule archives {
         or $7ZIP
 }
 
+rule windows_exe {
+    strings:
+        $mzHeader = {4d 5a}
+    condition:
+        $mzHeader at 0x0
+}
+
 rule innoSetup {
     strings:
         $INNO_VERSION_1_2_10  = {72 44 6c 50 74 53 30 32 87 65 56 78}
