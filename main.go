@@ -17,17 +17,15 @@ func main() {
 
 	setupYara()
 
-
 	Bundle.MessageQueue.DownloadedQueue.RegisterCallback("Importer", func(payload string) error {
 
 		Bundle.Log.WithField("payload", payload).Debug("Got new Message!")
-		var entry MFTCommon.DownloadEntry
+		var entry MFTCommon.DownloadWrapper
 		err := json.Unmarshal([]byte(payload), &entry)
 		if err != nil {
 			Bundle.Log.WithField("payload", payload).WithError(err).Error("Could not unmarshall json: %v", err)
 		}
 
-		Bundle.Log.WithField("file", entry).Infof("Handeling %s in Worker %d", entry.PackageID.GetID(), id)
 		analyse(entry)
 		return nil
 	})

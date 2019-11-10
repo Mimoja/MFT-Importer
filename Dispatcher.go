@@ -2,61 +2,63 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/Mimoja/MFT-Common"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
-	"github.com/Mimoja/MFT-Common"
 )
 
 var jsonEncoder *json.Encoder
 
-func analyse(entry MFTCommon.DownloadEntry) MFTCommon.ImportEntry {
+func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 	Bundle.Log.WithField("file", entry).Infof("Dispatching %s", entry.PackageID.GetID())
 
 	var ientry MFTCommon.ImportEntry
 
-	found, err, oldIEntry := Bundle.DB.Exists("imports", entry.PackageID.GetID())
-	if err == nil && found == true && !Bundle.Config.App.Importer.ForceReimport {
-		data, err := oldIEntry.Source.MarshalJSON()
-		if err != nil {
-			Bundle.Log.WithError(err).Info("Could not get old entry from elastic: %v", err)
-		} else {
-			//s := string(downloadFileContent)
-			//fmt.Println(s)
-			err = json.Unmarshal(data, &ientry)
+	if !Bundle.Config.App.Importer.ForceReimport && !entry.ForceReimport {
+		found, err, oldIEntry := Bundle.DB.Exists("imports", entry.PackageID.GetID())
+		if err == nil && found == true {
+			data, err := oldIEntry.Source.MarshalJSON()
 			if err != nil {
-				Bundle.Log.WithError(err).WithField("payload", string(data)).Warnf("Could unmarshall old entry from elastic: %v", err)
-			}
-			updateRequired := true
-			if ientry.ImportDataDefinition != "" {
-				updateRequired, err = MFTCommon.DataDefinitionUpgradeRequired(MFTCommon.CurrentImportDataDefinition, ientry.ImportDataDefinition)
+				Bundle.Log.WithError(err).Info("Could not get old entry from elastic: %v", err)
+			} else {
+				//s := string(downloadFileContent)
+				//fmt.Println(s)
+				err = json.Unmarshal(data, &ientry)
 				if err != nil {
-					Bundle.Log.WithField("file", entry).WithError(err).Warnf("Could not parse version fils: %s %v", ientry.ImportDataDefinition, err)
+					Bundle.Log.WithError(err).WithField("payload", string(data)).Warnf("Could unmarshall old entry from elastic: %v", err)
 				}
-			}
+				updateRequired := true
+				if ientry.ImportDataDefinition != "" {
+					updateRequired, err = MFTCommon.DataDefinitionUpgradeRequired(MFTCommon.CurrentImportDataDefinition, ientry.ImportDataDefinition)
+					if err != nil {
+						Bundle.Log.WithField("file", entry).WithError(err).Warnf("Could not parse version fils: %s %v", ientry.ImportDataDefinition, err)
+					}
+				}
 
-			if ientry.Success && !updateRequired {
-				Bundle.Log.WithField("file", entry).Info("Skipping Import: ", entry.DownloadPath)
-				sendImportEntry(ientry)
-				return ientry
-			}
+				if ientry.Success && !updateRequired {
+					Bundle.Log.WithField("file", entry).Info("Skipping Import: ", entry.DownloadPath)
+					sendImportEntry(ientry)
+					return ientry
+				}
 
-			if updateRequired {
-				Bundle.Log.WithField("file", entry).Info("Import already exists but requires upgrade")
-			}
+				if updateRequired {
+					Bundle.Log.WithField("file", entry).Info("Import already exists but requires upgrade")
+				}
 
-			if !ientry.Success {
-				Bundle.Log.WithField("file", entry).Info("Import already exists but nothing was found")
-			}
+				if !ientry.Success {
+					Bundle.Log.WithField("file", entry).Info("Import already exists but nothing was found")
+				}
 
+			}
 		}
 	}
 
 	ientry = MFTCommon.ImportEntry{
 		ImportDataDefinition: MFTCommon.CurrentImportDataDefinition,
-		MetaData:             entry,
+		MetaData:             entry.DownloadEntry,
 		Success:              false,
 	}
 
