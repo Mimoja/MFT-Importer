@@ -16,9 +16,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 	Bundle.Log.WithField("file", entry).Infof("Dispatching %s", entry.PackageID.GetID())
 
 	var ientry MFTCommon.ImportEntry
-
-	if !Bundle.Config.App.Importer.ForceReimport && !entry.ForceReimport {
-		found, err, oldIEntry := Bundle.DB.Exists("imports", entry.PackageID.GetID())
+	found, err, oldIEntry := Bundle.DB.Exists("imports", entry.PackageID.GetID())
 		if err == nil && found == true {
 			data, err := oldIEntry.Source.MarshalJSON()
 			if err != nil {
@@ -38,6 +36,8 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 					}
 				}
 
+				updateRequired = updateRequired || Bundle.Config.App.Importer.ForceReimport || entry.ForceReimport
+
 				if ientry.Success && !updateRequired {
 					Bundle.Log.WithField("file", entry).Info("Skipping Import: ", entry.DownloadPath)
 					sendImportEntry(ientry)
@@ -54,7 +54,8 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 			}
 		}
-	}
+
+	initialImport := ientry.ImportTime
 
 	ientry = MFTCommon.ImportEntry{
 		ImportDataDefinition: MFTCommon.CurrentImportDataDefinition,
@@ -82,16 +83,19 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		return ientry
 	}
 
+
 	ientry, err = detect(ientry, &downloadFile, downloadFileContent)
 	if err != nil {
 		Bundle.Log.WithError(err).WithField("file", downloadFile).Error("Import failed: %v\n", err)
 		return ientry
 	}
 
-
 	ientry.LastImportTime = time.Now().Format("2006-01-02T15:04:05Z07:00")
-	if ientry.ImportTime == "" {
+	// if this is the initial import
+	if initialImport == "" {
 		ientry.ImportTime = ientry.LastImportTime
+	} else {
+		ientry.ImportTime = initialImport
 	}
 	sendImportEntry(ientry)
 
