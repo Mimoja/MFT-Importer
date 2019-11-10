@@ -3,7 +3,7 @@ module github.com/Mimoja/MFT-Importer
 go 1.13
 
 require (
-	github.com/Mimoja/MFT-Common v0.0.0-20191110082514-f23867189858
+	github.com/Mimoja/MFT-Common v0.0.0-20191110092550-ae8e0ed6d200
 	github.com/gen2brain/go-unarr v0.0.0-20190203132630-dd30f8db8e40
 	github.com/go-ini/ini v1.51.0 // indirect
 	github.com/hillu/go-yara v1.1.0

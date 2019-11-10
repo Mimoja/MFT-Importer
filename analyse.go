@@ -88,9 +88,11 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		return ientry
 	}
 
-	ientry.Contents = append([]MFTCommon.StorageEntry{downloadFile}, ientry.Contents...)
-	ientry.ImportTime = time.Now().Format("2006-01-02T15:04:05Z07:00")
 
+	ientry.LastImportTime = time.Now().Format("2006-01-02T15:04:05Z07:00")
+	if ientry.ImportTime == "" {
+		ientry.ImportTime = ientry.LastImportTime
+	}
 	sendImportEntry(ientry)
 
 	Bundle.Log.WithField("file", entry).Info("Finished analysis")
