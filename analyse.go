@@ -57,16 +57,22 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 	initialImport := ientry.ImportTime
 
-	ientry = MFTCommon.ImportEntry{
+	newEntry := MFTCommon.ImportEntry{
 		ImportDataDefinition: MFTCommon.CurrentImportDataDefinition,
-		MetaData:             entry.DownloadEntry,
+		MetaData:             ientry.MetaData,
 		Success:              false,
 	}
 
+	//userupload is always less trustworthy
+	if ientry.MetaData.DownloadURL == "" || strings.Contains(ientry.MetaData.DownloadURL, "userupload") && entry.DownloadURL != ""{
+		newEntry.MetaData.DownloadURL = entry.DownloadURL;
+	}
+	ientry = newEntry
+
 	downloadFile := MFTCommon.StorageEntry{
-		ID:        entry.PackageID,
-		Path:      entry.DownloadPath,
-		PackageID: entry.PackageID,
+		ID:        ientry.MetaData.PackageID,
+		Path:      ientry.MetaData.DownloadPath,
+		PackageID: ientry.MetaData.PackageID,
 		Tags:      []string{"DOWNLOAD"},
 	}
 
@@ -83,6 +89,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		return ientry
 	}
 
+	ientry.Contents = []MFTCommon.StorageEntry{downloadFile}
 
 	ientry, err = detect(ientry, &downloadFile, downloadFileContent)
 	if err != nil {
@@ -168,33 +175,15 @@ func detect(entry MFTCommon.ImportEntry, storageEntry *MFTCommon.StorageEntry, d
 	switch extension {
 	case ".exe":
 		//TODO run special detection!
-
-	case ".jpg":
-		fallthrough
-	case ".jpeg":
-		fallthrough
-	case ".png":
+		storageEntry.Tags = append(storageEntry.Tags, "EXECUTABLE")
+	case ".jpg", ".jpeg", ".png":
 		storageEntry.Tags = append(storageEntry.Tags, "IMAGE")
 		fallthrough
-	case ".bat":
-		fallthrough
-	case ".txt":
-		fallthrough
-	case ".inf":
+	case ".bat", ".txt", ".inf":
 		return entry, nil
-
 	case ".efi":
 		storageEntry.Tags = append(storageEntry.Tags, "EFI_EXECUTABLE")
-
-	case ".bin":
-		fallthrough
-	case ".fd":
-		fallthrough
-	case ".fd1":
-		fallthrough
-	case ".fd2":
-		fallthrough
-	case ".rom":
+	case ".bin", ".fd", ".fd1", ".fd2", ".rom":
 		storageEntry.Tags = append(storageEntry.Tags, "FLASHIMAGE_BY_FILEEXTENSION")
 	}
 
