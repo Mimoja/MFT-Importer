@@ -73,7 +73,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		ID:        ientry.MetaData.PackageID,
 		Path:      ientry.MetaData.DownloadPath,
 		PackageID: ientry.MetaData.PackageID,
-		Tags:      []string{"PACKAGE 	"},
+		Tags:      []string{"PACKAGE"},
 	}
 
 	object, err := Bundle.Storage.GetFile(downloadFile.PackageID.GetID())
