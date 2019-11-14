@@ -126,14 +126,15 @@ func sendImportEntry(ientry MFTCommon.ImportEntry) {
 					Tags:     storageEntryElement.Tags,
 				}
 
+				indexType := "flashimage"
+				id := flashImage.ID.GetID()
+				Bundle.DB.StoreElement("flashimages", &indexType, flashImage, &id)
+
+
 				err := Bundle.MessageQueue.FlashImagesQueue.MarshalAndSend(flashImage)
 				if err != nil {
 					Bundle.Log.WithError(err).Error("Could not send entry to flashimage Queue: %v \n", err)
 				}
-
-				indexType := "flashimage"
-				id := flashImage.ID.GetID()
-				Bundle.DB.StoreElement("flashimages", &indexType, flashImage, &id)
 
 				ientry.Success = true
 
