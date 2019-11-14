@@ -55,12 +55,11 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 			}
 		}
 
-	initialImport := ientry.ImportTime
-
 	newEntry := MFTCommon.ImportEntry{
 		ImportDataDefinition: MFTCommon.CurrentImportDataDefinition,
 		MetaData:             ientry.MetaData,
 		Success:              false,
+		ImportTime: ientry.ImportTime,
 	}
 
 	//userupload is always less trustworthy
@@ -76,7 +75,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		Tags:      []string{"PACKAGE"},
 	}
 
-	object, err := Bundle.Storage.GetFile(downloadFile.PackageID.GetID())
+	object, err := Bundle.Storage.GetFile(downloadFile.ID.GetID())
 	if err != nil {
 		Bundle.Log.WithField("file", downloadFile).WithError(err).Error("Could not fetch file from storage: %v\n", err)
 		return ientry
@@ -89,21 +88,22 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		return ientry
 	}
 
-	ientry.Contents = []MFTCommon.StorageEntry{downloadFile}
 
 	ientry, err = detect(ientry, &downloadFile, downloadFileContent)
 	if err != nil {
 		Bundle.Log.WithError(err).WithField("file", downloadFile).Error("Import failed: %v\n", err)
 		return ientry
 	}
+	// Put the inital package at first position
+	ientry.Contents = append([]MFTCommon.StorageEntry{downloadFile}, ientry.Contents...)
+
 
 	ientry.LastImportTime = time.Now().Format("2006-01-02T15:04:05Z07:00")
 	// if this is the initial import
-	if initialImport == "" {
+	if ientry.ImportTime == "" {
 		ientry.ImportTime = ientry.LastImportTime
-	} else {
-		ientry.ImportTime = initialImport
 	}
+
 	sendImportEntry(ientry)
 
 	Bundle.Log.WithField("file", entry).Info("Finished analysis")
