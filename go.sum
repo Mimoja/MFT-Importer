@@ -3,6 +3,7 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Mimoja/MFT-Common v0.0.0-20191110092550-ae8e0ed6d200 h1:UyvC8D8Aizafe+rPG6UQB6XlFE7NjuaHLGsYEfaO+yQ=
 github.com/Mimoja/MFT-Common v0.0.0-20191110092550-ae8e0ed6d200/go.mod h1:mx0kR2nu0iYng9ptKMDmLMWydLH1hn60gUmJYa9BuVo=
+github.com/Mimoja/MFT-Common v0.0.0-20191114081849-df980f4b1ff2 h1:WtSjCdgipkBVL+I49pLLg3WhORXs9/G1xprl0d9cqeg=
 github.com/Mimoja/MFT-Common v0.0.0-20191114081849-df980f4b1ff2/go.mod h1:mx0kR2nu0iYng9ptKMDmLMWydLH1hn60gUmJYa9BuVo=
 github.com/Mimoja/PSP-Entry-Types v0.0.0-20190620172056-b980f3fbafa7 h1:M9QDkfQ8oE94q0+odPUcw2u0F9cbTT7o9YStV2WragM=
 github.com/Mimoja/PSP-Entry-Types v0.0.0-20190620172056-b980f3fbafa7/go.mod h1:iZDm2Dh5T8SliuWA1nTbUfSAWTMWWn1fMVHR3CbkrpA=
