@@ -17,56 +17,46 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 	var ientry MFTCommon.ImportEntry
 	found, err, oldIEntry := Bundle.DB.Exists("imports", entry.PackageID.GetID())
-		if err == nil && found == true {
-			data, err := oldIEntry.Source.MarshalJSON()
+	if err == nil && found == true {
+		data, err := oldIEntry.Source.MarshalJSON()
+		if err != nil {
+			Bundle.Log.WithError(err).Info("Could not get old entry from elastic: %v", err)
+		} else {
+			err = json.Unmarshal(data, &ientry)
 			if err != nil {
-				Bundle.Log.WithError(err).Info("Could not get old entry from elastic: %v", err)
-			} else {
-				//s := string(downloadFileContent)
-				//fmt.Println(s)
-				err = json.Unmarshal(data, &ientry)
-				if err != nil {
-					Bundle.Log.WithError(err).WithField("payload", string(data)).Warnf("Could unmarshall old entry from elastic: %v", err)
-				}
-				updateRequired := true
-				if ientry.ImportDataDefinition != "" {
-					updateRequired, err = MFTCommon.DataDefinitionUpgradeRequired(MFTCommon.CurrentImportDataDefinition, ientry.ImportDataDefinition)
-					if err != nil {
-						Bundle.Log.WithField("file", entry).WithError(err).Warnf("Could not parse version fils: %s %v", ientry.ImportDataDefinition, err)
-					}
-				}
-
-				updateRequired = updateRequired || Bundle.Config.App.Importer.ForceReimport || entry.ForceReimport
-
-				if ientry.Success && !updateRequired {
-					Bundle.Log.WithField("file", entry).Info("Skipping Import: ", entry.DownloadPath)
-					sendImportEntry(ientry)
-					return ientry
-				}
-
-				if updateRequired {
-					Bundle.Log.WithField("file", entry).Info("Import already exists but requires upgrade")
-				}
-
-				if !ientry.Success {
-					Bundle.Log.WithField("file", entry).Info("Import already exists but nothing was found")
-				}
-
+				Bundle.Log.WithError(err).WithField("payload", string(data)).Warnf("Could unmarshall old entry from elastic: %v", err)
 			}
+			updateRequired := true
+			if ientry.ImportDataDefinition != "" {
+				updateRequired, err = MFTCommon.DataDefinitionUpgradeRequired(MFTCommon.CurrentImportDataDefinition, ientry.ImportDataDefinition)
+				if err != nil {
+					Bundle.Log.WithField("file", entry).WithError(err).Warnf("Could not parse version fils: %s %v", ientry.ImportDataDefinition, err)
+				}
+			}
+
+			updateRequired = updateRequired || Bundle.Config.App.Importer.ForceReimport || entry.ForceReimport
+
+			if ientry.Success && !updateRequired {
+				Bundle.Log.WithField("file", entry).Info("Skipping Import: ", entry.DownloadPath)
+				sendImportEntry(ientry)
+				return ientry
+			}
+
+			if updateRequired {
+				Bundle.Log.WithField("file", entry).Info("Import already exists but requires upgrade")
+			}
+
+			if !ientry.Success {
+				Bundle.Log.WithField("file", entry).Info("Import already exists but nothing was found")
+			}
+
 		}
-
-	newEntry := MFTCommon.ImportEntry{
-		ImportDataDefinition: MFTCommon.CurrentImportDataDefinition,
-		MetaData:             ientry.MetaData,
-		Success:              false,
-		ImportTime: ientry.ImportTime,
+	} else {
+		ientry.MetaData = entry.DownloadEntry
 	}
 
-	//userupload is always less trustworthy
-	if ientry.MetaData.DownloadURL == "" || strings.Contains(ientry.MetaData.DownloadURL, "userupload") && entry.DownloadURL != ""{
-		newEntry.MetaData.DownloadURL = entry.DownloadURL;
-	}
-	ientry = newEntry
+	ientry.ImportDataDefinition = MFTCommon.CurrentImportDataDefinition
+	ientry.Success = false
 
 	downloadFile := MFTCommon.StorageEntry{
 		ID:        ientry.MetaData.PackageID,
@@ -77,7 +67,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 	object, err := Bundle.Storage.GetFile(downloadFile.ID.GetID())
 	if err != nil {
-		Bundle.Log.WithField("file", downloadFile).WithError(err).Error("Could not fetch file from storage: %v\n", err)
+		Bundle.Log.WithField("file", downloadFile).WithError(err).Errorf("Could not fetch file from storage: %v\n", err)
 		return ientry
 	}
 	defer object.Close()
@@ -88,7 +78,6 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 		return ientry
 	}
 
-
 	ientry, err = detect(ientry, &downloadFile, downloadFileContent)
 	if err != nil {
 		Bundle.Log.WithError(err).WithField("file", downloadFile).Error("Import failed: %v\n", err)
@@ -96,7 +85,6 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 	}
 	// Put the inital package at first position
 	ientry.Contents = append([]MFTCommon.StorageEntry{downloadFile}, ientry.Contents...)
-
 
 	ientry.LastImportTime = time.Now().Format("2006-01-02T15:04:05Z07:00")
 	// if this is the initial import
@@ -129,7 +117,6 @@ func sendImportEntry(ientry MFTCommon.ImportEntry) {
 				indexType := "flashimage"
 				id := flashImage.ID.GetID()
 				Bundle.DB.StoreElement("flashimages", &indexType, flashImage, &id)
-
 
 				err := Bundle.MessageQueue.FlashImagesQueue.MarshalAndSend(flashImage)
 				if err != nil {
