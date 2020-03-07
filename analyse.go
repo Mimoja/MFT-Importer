@@ -57,6 +57,7 @@ func analyse(entry MFTCommon.DownloadWrapper) MFTCommon.ImportEntry {
 
 	ientry.ImportDataDefinition = MFTCommon.CurrentImportDataDefinition
 	ientry.Success = false
+	ientry.Contents = []MFTCommon.StorageEntry{}
 
 	downloadFile := MFTCommon.StorageEntry{
 		ID:        ientry.MetaData.PackageID,
